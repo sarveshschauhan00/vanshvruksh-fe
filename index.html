@@ -1,0 +1,88 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="FamilyTree.js"></script>
+</head>
+<body>
+    <div style="width:100%; height:700px;" id="tree"></div>
+
+    <script>
+        // Example data to send
+        const requestData = {
+            id: "10bb1528-26cd-42da-ac9f-2bcc1c7bd30f",
+        };
+
+        let family = new FamilyTree(document.getElementById("tree"), {
+            mode: 'dark',
+            nodeTreeMenu: true,
+            // mouseScrool: FamilyTree.none,
+            nodeBinding: {
+                field_0: "name"
+            }
+        });
+    
+        // Making the POST request
+        fetch('http://127.0.0.1:5000/api/data', {
+            method: 'POST',                          // Specify the method
+            headers: {
+                'Content-Type': 'application/json'    // Specify the content type
+            },
+            body: JSON.stringify(requestData)       // Convert the JavaScript object to a JSON string
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();              // Convert the response data to JSON if the response was ok
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(data => {
+            console.log('Received data:', data.node);  // Handle the JSON data
+    
+            family.load(data.node);
+        })
+        .catch(error => console.error('Error:', error));
+
+
+        family.onUpdateNode((args) => {
+            // Making the POST request
+            fetch('http://127.0.0.1:5000/api/update', {
+                method: 'POST',                          // Specify the method
+                headers: {
+                    'Content-Type': 'application/json'    // Specify the content type
+                },
+                body: JSON.stringify(args)       // Convert the JavaScript object to a JSON string
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();              // Convert the response data to JSON if the response was ok
+                }
+                throw new Error('Network response was not ok.');
+            })
+            .then(data => {
+                console.log('Data sent successfully');  // Handle the JSON data
+                // location.reload();
+            })
+            .catch(error => console.error('Error:', error));
+        });
+            
+
+        // Event listener for node creation
+        family.on('nodeCreate', function(nodeId) {
+            // Open the edit menu for the new node
+            family.editUI.show(nodeId);
+        });
+
+        // Alternatively, if you're capturing the node addition after a specific action:
+        family.on('update', function(sender, args) {
+            if (args.action === "add") {
+                family.editUI.show(args.nodeId);
+            }
+        });
+
+
+
+    </script>
+</body>
+</html>
